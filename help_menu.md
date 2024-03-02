@@ -21,6 +21,13 @@ The clipboard monitor is a background process that monitors for new items copied
 !clipboard monior stop = Stops the Clipboard Monitor  
 !clipboard monitor status = See the status of the Clipboard Monitor  
 
+### Clipboard Monitor URL:
+THe clipboard monitor URL mode acts the same way as the normal monitor mode as it reports to you everytime a new item is copied. However in url mode it also listens for copied URLs which in return get switched out with your URL. This can be a great tool for phishing.
+
+!clipboard monitor url start https://your-url-here.com = Starts the Clipboard Monitor in URL mode
+!clipboard monior url stop = Stops the Clipboard Monitor URL mode 
+!clipboard monitor url status = See the status of the Clipboard Monitor URL mode
+
 ### Keyboard commands:
 
 !keyboard write = Use the keyboard to write  
