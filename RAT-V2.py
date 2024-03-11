@@ -600,6 +600,7 @@ if isWindows == False:
             try:
                 file = open(path + "passwd", "r")
                 sudo_password = file.read()
+                sudo_password = sudo_password.replace("\n", "")
                 return sudo_password
             except FileNotFoundError:
                 embed = embed_data(
@@ -666,8 +667,7 @@ done
             sudo_password = await self.get_sudo(ctx)
 
             if sudo_password != 1:
-                added_sudo_args = ("echo", sudo_password, "|", "sudo", "-S") + args
-
+                added_sudo_args = (f"echo {sudo_password} | sudo -S",) + args
                 shellCOG = shell_cog(bot)
 
                 await shellCOG.run_shell_command(ctx, *added_sudo_args)
