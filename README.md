@@ -11,6 +11,8 @@ Use this responsibly and ethically. Do not use on any unauthorized targets. I am
 - Python 3.1 or higher with required libraries (see getting started)
 - Linux or Windows, the tool will auto detect if its windows or linux and enable the OS dependent functions. If any other OS is detected it will just exit the program.
 
+It does currently not support wayland, this will be fixed in the future.
+
 ## Getting Started
 
 ### The Attacker
