@@ -476,30 +476,25 @@ class keyboard_cog(commands.Cog):
             for arg in split:
                 args.append(arg.replace("\n", ""))
 
-            match args[0]:
-                case "REM":
-                    pass
-
-                case "STRING":
-                    text = " ".join(args[1:])
-                    self.pyautogui_write(text)
-
-                case "STRINGLN":
-                    text = " ".join(args[1:])
-                    self.pyautogui_write(text)
-                    await asyncio.sleep(0.2)
-                    self.pyautogui_press("ENTER")
-
-                case "DELAY":
-                    time = int(args[1]) / 1000
-                    await asyncio.sleep(time)
-
-                case _:
-                    hotkeys = []
-                    for arg in args:
-                        hotkeys.append(arg.replace("GUI", "win"))
-                    print(hotkeys)
-                    self.pyautogui_hotkey(hotkeys)
+            if args[0] == "REM":
+                pass
+            elif args[0] == "STRING":
+                text = " ".join(args[1:])
+                self.pyautogui_write(text)
+            elif args[0] == "STRINGLN":
+                text = " ".join(args[1:])
+                self.pyautogui_write(text)
+                await asyncio.sleep(0.2)
+                self.pyautogui_press("ENTER")
+            elif args[0] == "DELAY":
+                time = int(args[1]) / 1000
+                await asyncio.sleep(time)
+            else:
+                hotkeys = []
+                for arg in args:
+                    hotkeys.append(arg.replace("GUI", "win"))
+                print(hotkeys)
+                self.pyautogui_hotkey(hotkeys)
 
 
     @commands.group(name="keyboard", invoke_without_command=True)
