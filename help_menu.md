@@ -50,6 +50,12 @@ Different ways to deliver a messag box to the user
 
 !keyboard duckyscript = Upload a duckyscript file that will get executed on the targets computer. Note that this only supports very simple duckyscript syntax like: REM, STRING, STRINGLN, DELAY, and hotkeys
 
+## Windows commands:
+
+### Standalone commands:
+
+!bluescreen = Throws a bluescreen on the system. Make sure you have set up persistence before running this.
+
 ## Linux commands:
 
 ### Sudo commands:
