@@ -52,9 +52,11 @@ Different ways to deliver a messag box to the user
 
 ## Windows commands:
 
-### Standalone commands:
+### Bluescreen commands:
+ Make sure you have set up persistence before running these.
 
-!bluescreen = Throws a bluescreen on the system. Make sure you have set up persistence before running this.
+!bluescreen = Throws a bluescreen on the system.
+!bluescreen mouse = Waits for the mouse to move, and when it does it throws a bluescren.
 
 ## Linux commands:
 
