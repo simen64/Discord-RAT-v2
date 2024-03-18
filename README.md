@@ -41,8 +41,15 @@ Heres how to deploy on your target.
 
 1. Clone the repo or download the [RAT-V2.py](RAT-V2.py) file. (It is recommended to put this in a folder)
 2. In the same directory create a file called `.env`
-3. In this file add this line:
-```DISCORD_TOKEN=the token you gained earlier```
+3. In this file add thiese two lines:  
+```
+DISCORD_TOKEN=the token you gained earlier
+```  
+```
+CHANNEL=your channel id
+```
+You can get your channel id by enabling developer mode in Discord settings, then right clicking your discord channel and pressing `Copy Channel ID`  
+
 4. Save the file and close it
 5. Install the needed libraries:
 ```python -m pip install -U Pillow pyperclip discord.py[voice] requests pyautogui python-dotenv``` (`python3` if your on Linux)
