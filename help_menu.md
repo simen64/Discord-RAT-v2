@@ -11,11 +11,11 @@
 Use "!shell -t 10" to set a timeout for your command. The default is 30 seconds
 
 ### File commands
-!ls = Lists all the files in a directory
-!cd directory = Changes directory
-!delete path = Deletes a file
-!download path = Downloads a file from the targets computer
-!upload = Uploads an attachment to the targets computer
+!ls = Lists all the files in a directory  
+!cd directory = Changes directory  
+!delete path = Deletes a file  
+!download path = Downloads a file from the targets computer  
+!upload = Uploads an attachment to the targets computer  
 
 ### Clipboard commands:
 !clipboard get = Get the targets current clipboard  
