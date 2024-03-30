@@ -70,9 +70,14 @@ async def on_ready():
     try:
         local_ip = get_local_ip()
     except:
+        local_ip = "Could not find"
         pass
 
-    public_ip = get_public_ip()
+    try:
+        public_ip = get_public_ip()
+    except:
+        public_ip = "Could not find"
+        pass
 
     embed = discord.Embed(
         title="Connection Made",
