@@ -50,6 +50,13 @@ Different ways to deliver a messag box to the user
 
 !keyboard duckyscript = Upload a duckyscript file that will get executed on the targets computer. Note that this only supports very simple duckyscript syntax like: REM, STRING, STRINGLN, DELAY, and hotkeys
 
+### Port Scan
+You can use the port scan command to scan ports on your targets network.  
+Do note that the way the scanner works with python sockets some ports may be registred as open even though they are not.  
+You may scan just one ip or a whole subnet using something like `192.168.4.0/24`. The ip you enter will be ping swept to check if they are up.
+
+!ports ip = Starts the port scan
+
 ## Windows commands:
 
 ### Bluescreen commands:
