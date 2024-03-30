@@ -2,9 +2,9 @@
 - Fix some minor issues with windows
 - Keylogger
 - .env scanner
-- Port scanner
 - SSH keys
 - Screen monitoring
 - Microphone listening
 - Webcam
 - UPNP
+- Persistance command
