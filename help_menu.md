@@ -57,6 +57,10 @@ You may scan just one ip or a whole subnet using something like `192.168.4.0/24`
 
 !ports ip = Starts the port scan
 
+### SSH
+
+!ssh-keys = Gets the ssh keys stored in .ssh from the targets computer
+
 ## Windows commands:
 
 ### Bluescreen commands:
