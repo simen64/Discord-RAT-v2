@@ -1,0 +1,7 @@
+Pillow
+pyperclip
+discord.py[voice]
+requests
+pyautogui
+python-dotenv
+pynput
